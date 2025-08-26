@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>President Scoreboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    h1 { text-align: center; }
+    .scoreboard, .history { margin: 20px auto; max-width: 700px; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background: #f0f0f0; }
+    select { padding: 5px; margin: 5px; }
+    button { padding: 10px 15px; margin: 10px 5px; border: none; border-radius: 5px; background: #007BFF; color: white; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .reset { background: #dc3545; }
+    .reset:hover { background: #a71d2a; }
+    details { margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>President Scoreboard</h1>
+  <div class="scoreboard">
+    <button class="reset" onclick="resetGame()">🔄 Reset All</button>
+    <p><strong>Total Games Played:</strong> <span id="gameCount">0</span></p>
+    <div id="players"></div>
+    <button onclick="addPlayer()">➕ Add Player</button>
+    <button onclick="recordGame()">✅ Record Game</button>
+    <h2>Scores</h2>
+    <table>
+      <thead><tr><th>Player</th><th>Score</th></tr></thead>
+      <tbody id="scoreTable"></tbody>
+    </table>
+  </div>
+
+  <div class="history">
+    <h2>Game History</h2>
+    <details open>
+      <summary>Show / Hide History</summary>
+      <ul id="historyList"></ul>
+    </details>
+  </div>
+
+  <script>
+    let players = ["Jackson", "Jade", "Niall", "Jessie"];
+    let scores = {};
+    let gameCount = 0;
+
+    function renderPlayers() {
+      const div = document.getElementById("players");
+      div.innerHTML = "";
+      players.forEach((p, i) => {
+        div.innerHTML += \`<input value="\${p}" onchange="editName(\${i}, this.value)"> 
+                          <select id="role\${i}"></select><br>\`;
+      });
+      updateRoleOptions();
+    }
+
+    function editName(i, newName) {
+      players[i] = newName;
+      if (!scores[newName]) scores[newName] = 0;
+      renderScores();
+    }
+
+    function addPlayer() {
+      players.push("Player " + (players.length+1));
+      renderPlayers();
+    }
+
+    function updateRoleOptions() {
+      const roleSets = players.length === 4 
+        ? ["President","Vice President","Scrotum","Arsehole"]
+        : ["President","Vice President","Neutral","Scrotum","Arsehole"];
+      players.forEach((_, i) => {
+        let sel = document.getElementById("role"+i);
+        sel.innerHTML = roleSets.map(r => \`<option value="\${r}">\${r}</option>\`).join("");
+      });
+    }
+
+    function recordGame() {
+      gameCount++;
+      document.getElementById("gameCount").innerText = gameCount;
+      const round = [];
+      players.forEach((p, i) => {
+        let role = document.getElementById("role"+i).value;
+        let pts = 0;
+        if (players.length === 4) {
+          if (role==="President") pts=4;
+          if (role==="Vice President") pts=3;
+          if (role==="Scrotum") pts=2;
+          if (role==="Arsehole") pts=1;
+        } else {
+          if (role==="President") pts=5;
+          if (role==="Vice President") pts=4;
+          if (role==="Neutral") pts=3;
+          if (role==="Scrotum") pts=2;
+          if (role==="Arsehole") pts=1;
+        }
+        scores[p] = (scores[p]||0) + pts;
+        round.push(\`\${p} = \${role} (+\${pts})\`);
+      });
+      renderScores();
+      const li = document.createElement("li");
+      li.textContent = \`Game \${gameCount}: \${round.join(", ")}\`;
+      document.getElementById("historyList").appendChild(li);
+    }
+
+    function renderScores() {
+      const tbody = document.getElementById("scoreTable");
+      tbody.innerHTML = "";
+      players.forEach(p => {
+        tbody.innerHTML += \`<tr><td>\${p}</td><td>\${scores[p]||0}</td></tr>\`;
+      });
+    }
+
+    function resetGame() {
+      scores = {};
+      gameCount = 0;
+      document.getElementById("gameCount").innerText = 0;
+      document.getElementById("historyList").innerHTML = "";
+      renderScores();
+    }
+
+    renderPlayers();
+    renderScores();
+  </script>
+</body>
+</html>
