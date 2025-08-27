@@ -3,77 +3,64 @@
 <head>
   <meta charset="UTF-8">
   <title>Presidents and Arsehole Card Game Scorer</title>
-  <!-- Google AdSense -->
-  <meta name="google-adsense-account" content="ca-pub-8460279361151582">
+
+  <!-- ✅ Google AdSense site verification (replace with your code) -->
+  <meta name="google-site-verification" content="ca-pub-8460279361151582" />
+
+  <!-- ✅ Google AdSense script (ads won’t show until site is verified) -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8460279361151582"
+     crossorigin="anonymous"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
-      background: #f4f4f9;
-      color: #333;
-    }
-    h1 {
       text-align: center;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 20px;
+    h1 {
+      margin-bottom: 10px;
     }
-    table, th, td {
-      border: 1px solid #ccc;
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 80%;
     }
     th, td {
+      border: 1px solid #444;
       padding: 10px;
       text-align: center;
     }
-    input[type="text"] {
-      padding: 5px;
-      width: 120px;
-    }
-    select {
-      padding: 5px;
-    }
     button {
       margin: 5px;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 5px;
-      background-color: #007BFF;
-      color: white;
+      padding: 10px 20px;
+      font-size: 16px;
+    }
+    .history {
+      margin-top: 30px;
+      text-align: left;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .history h2 {
       cursor: pointer;
     }
-    button:hover {
-      background-color: #0056b3;
-    }
-    #history {
-      margin-top: 20px;
-    }
-    .ad-container {
-      text-align: center;
-      margin: 20px 0;
-    }
-    /* Sticky ad bar at bottom */
-    .sticky-ad {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: #fff;
-      border-top: 1px solid #ccc;
-      text-align: center;
-      z-index: 9999;
-      padding: 5px 0;
+    .collapsed {
+      display: none;
     }
   </style>
 </head>
 <body>
   <h1>Presidents and Arsehole Card Game Scorer</h1>
-
-  <!-- Reset button -->
   <button onclick="resetScores()">Reset All</button>
 
-  <table id="scoreboard">
+  <div>
+    <label for="playerCount">Number of players:</label>
+    <input type="number" id="playerCount" min="4" value="4" onchange="updatePlayers()" />
+    <button onclick="addPlayer()">Add Player</button>
+  </div>
+
+  <table id="scoreTable">
     <thead>
       <tr>
         <th>Player</th>
@@ -84,169 +71,118 @@
   </table>
 
   <div>
-    <label for="roundPlayers">Number of Players:</label>
-    <input type="number" id="roundPlayers" value="4" min="4" max="10" onchange="initScores()">
+    <button onclick="recordGame()">Record Game</button>
+    <p>Total Games Played: <span id="gameCount">0</span></p>
   </div>
 
-  <div id="playerInputs"></div>
-
-  <button onclick="submitRound()">Submit Round</button>
-
-  <!-- Google AdSense Ad #1 -->
-  <div class="ad-container">
-    <ins class="adsbygoogle"
-         style="display:block; text-align:center; margin:20px 0;"
-         data-ad-client="ca-pub-8460279361151582"
-         data-ad-slot="1234567890"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-  </div>
-
-  <div id="history">
-    <h2>Game History</h2>
-    <ul id="gameHistory"></ul>
-    <p><strong>Total Games Played:</strong> <span id="totalGames">0</span></p>
-  </div>
-
-  <!-- Google AdSense Ad #2 -->
-  <div class="ad-container">
-    <ins class="adsbygoogle"
-         style="display:block; text-align:center; margin:20px 0;"
-         data-ad-client="ca-pub-8460279361151582"
-         data-ad-slot="1234567891"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
-  </div>
-
-  <!-- Sticky bottom anchor ad -->
-  <div class="sticky-ad">
-    <ins class="adsbygoogle"
-         style="display:inline-block;width:100%;height:60px"
-         data-ad-client="ca-pub-8460279361151582"
-         data-ad-slot="1234567892"></ins>
-    <script>
-         (adsbygoogle = window.adsbygoogle || []).push({});
-    </script>
+  <div class="history">
+    <h2 onclick="toggleHistory()">Game History ▼</h2>
+    <div id="historyContent"></div>
   </div>
 
   <script>
     let players = [];
     let scores = {};
-    let totalGames = 0;
+    let gameCount = 0;
+    let historyCollapsed = false;
 
-    function initScores() {
-      const numPlayers = parseInt(document.getElementById("roundPlayers").value);
-      players = [];
-      scores = {};
-      const tbody = document.getElementById("scoreBody");
-      tbody.innerHTML = "";
+    function updatePlayers() {
+      const count = parseInt(document.getElementById('playerCount').value);
+      if (players.length < count) {
+        for (let i = players.length; i < count; i++) {
+          const name = prompt("Enter player " + (i + 1) + " name:");
+          players.push(name || "Player " + (i + 1));
+          scores[players[i]] = 0;
+        }
+      } else if (players.length > count) {
+        players = players.slice(0, count);
+      }
+      renderTable();
+    }
 
-      for (let i = 0; i < numPlayers; i++) {
-        let name = "Player " + (i + 1);
+    function addPlayer() {
+      const name = prompt("Enter new player name:");
+      if (name) {
         players.push(name);
         scores[name] = 0;
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td><input type="text" id="name${i}" value="${name}" onchange="updatePlayerName(${i})"></td>
-          <td id="score${i}">0</td>
-        `;
-        tbody.appendChild(row);
-      }
-      updatePlayerInputs();
-    }
-
-    function updatePlayerName(index) {
-      const newName = document.getElementById("name" + index).value || ("Player " + (index + 1));
-      const oldName = players[index];
-
-      if (newName !== oldName) {
-        scores[newName] = scores[oldName];
-        delete scores[oldName];
-        players[index] = newName;
-        renderScores();
-        updatePlayerInputs();
+        document.getElementById('playerCount').value = players.length;
+        renderTable();
       }
     }
 
-    function renderScores() {
-      players.forEach((p, i) => {
-        document.getElementById("name" + i).value = p;
-        document.getElementById("score" + i).textContent = scores[p];
+    function renderTable() {
+      const tbody = document.getElementById('scoreBody');
+      tbody.innerHTML = '';
+      players.forEach(player => {
+        const row = `<tr><td>${player}</td><td>${scores[player]}</td></tr>`;
+        tbody.innerHTML += row;
       });
     }
 
-    function updatePlayerInputs() {
-      const container = document.getElementById("playerInputs");
-      container.innerHTML = "";
-      players.forEach((p, i) => {
-        const select = document.createElement("select");
-        select.id = "player" + i;
-        players.forEach(pl => {
-          const option = document.createElement("option");
-          option.value = pl;
-          option.textContent = pl;
-          select.appendChild(option);
-        });
-        const label = document.createElement("label");
-        label.textContent = `Position ${i + 1}: `;
-        container.appendChild(label);
-        container.appendChild(select);
-        container.appendChild(document.createElement("br"));
+    function recordGame() {
+      if (players.length < 4) {
+        alert("At least 4 players required.");
+        return;
+      }
+
+      const positions = ["President", "Vice President"];
+      if (players.length > 4) positions.push("Neutral");
+      positions.push("Scrotum", "Arsehole");
+
+      const round = {};
+      players.forEach(player => {
+        let pos;
+        do {
+          pos = prompt(`Enter position for ${player} (${positions.join(", ")}):`);
+        } while (!positions.includes(pos));
+        round[player] = pos;
       });
+
+      const scoresThisRound = {};
+      players.forEach(player => {
+        let pts = 0;
+        if (round[player] === "President") pts = players.length > 4 ? 5 : 4;
+        else if (round[player] === "Vice President") pts = players.length > 4 ? 4 : 3;
+        else if (round[player] === "Neutral") pts = 3;
+        else if (round[player] === "Scrotum") pts = 2;
+        else if (round[player] === "Arsehole") pts = 1;
+
+        scores[player] += pts;
+        scoresThisRound[player] = pts;
+      });
+
+      gameCount++;
+      document.getElementById('gameCount').innerText = gameCount;
+      renderTable();
+      addHistory(round, scoresThisRound);
     }
 
-    function submitRound() {
-      const numPlayers = players.length;
-      const positions = [];
-      for (let i = 0; i < numPlayers; i++) {
-        positions.push(document.getElementById("player" + i).value);
-      }
-
-      // Scoring rules
-      if (numPlayers === 4) {
-        scores[positions[0]] += 4; // President
-        scores[positions[1]] += 3; // Vice President
-        scores[positions[2]] += 2; // Scrotum
-        scores[positions[3]] += 1; // Arsehole
-      } else {
-        scores[positions[0]] += 5; // President
-        scores[positions[1]] += 4; // Vice President
-        for (let i = 2; i < numPlayers - 2; i++) {
-          scores[positions[i]] += 3; // Neutrals
-        }
-        scores[positions[numPlayers - 2]] += 2; // Scrotum
-        scores[positions[numPlayers - 1]] += 1; // Arsehole
-      }
-
-      totalGames++;
-      renderScores();
-      updateHistory(positions);
-    }
-
-    function updateHistory(positions) {
-      const history = document.getElementById("gameHistory");
-      const li = document.createElement("li");
-      li.textContent = positions.join(" → ");
-      history.appendChild(li);
-      document.getElementById("totalGames").textContent = totalGames;
+    function addHistory(round, scoresThisRound) {
+      const history = document.getElementById('historyContent');
+      let entry = `<p><strong>Game ${gameCount}</strong><br>`;
+      players.forEach(player => {
+        entry += `${player}: ${round[player]} (+${scoresThisRound[player]})<br>`;
+      });
+      entry += '</p>';
+      history.innerHTML += entry;
     }
 
     function resetScores() {
-      totalGames = 0;
-      document.getElementById("gameHistory").innerHTML = "";
-      document.getElementById("totalGames").textContent = totalGames;
-      initScores();
+      if (!confirm("Are you sure you want to reset everything?")) return;
+      scores = {};
+      players.forEach(p => scores[p] = 0);
+      gameCount = 0;
+      document.getElementById('gameCount').innerText = 0;
+      document.getElementById('historyContent').innerHTML = '';
+      renderTable();
     }
 
-    // Initialize
-    initScores();
+    function toggleHistory() {
+      historyCollapsed = !historyCollapsed;
+      document.getElementById('historyContent').className = historyCollapsed ? "collapsed" : "";
+    }
+
+    updatePlayers();
   </script>
 </body>
 </html>
